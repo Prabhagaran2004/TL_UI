@@ -201,35 +201,39 @@ const Navbar = () => {
     <>
       {/* Navigation Bar */}
       <nav className={`fixed top-0 left-0 h-20 right-0 z-50 transition-all bg-slate-900 backdrop-blur-xl border-b border-slate-800/50 shadow-2xl duration-500 ease-in-out`}>
-
-       {/* className={`fixed top-0 left-0 sm:left-56 md:left-60 lg:left-64 xl:left-60 right-0 h-16 sm:h-20 z-50 transition-all bg-slate-900/95 backdrop-blur-xl border-b border-slate-800/50 shadow-lg sm:shadow-2xl duration-500 ease-in-out`} */}
         
         {/* Premium gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-purple-600/5 to-cyan-600/5 pointer-events-none" />
         
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
+        <div className="container mx-auto px-3 sm:px-6 py-4 h-full">
+          <div className="flex justify-between items-center h-full">
             
             {/* Logo Section */}
-            <div className="flex items-center space-x-3 group">
+            <div className="flex items-center space-x-2 sm:space-x-3 group">
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-400 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300 group-hover:scale-105">
-                  <div className="w-6 h-6 bg-white rounded-md flex items-center justify-center">
-                    <span className="text-black font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text">T</span>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-blue-400 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300 group-hover:scale-105">
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white rounded-sm sm:rounded-md flex items-center justify-center">
+                    <span className="text-black text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text">T</span>
                   </div>
                 </div>
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur" />
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg sm:rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-300 bg-clip-text text-transparent">
+              <div className="hidden xs:block sm:block">
+                <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-300 bg-clip-text text-transparent">
                   TNV Tools
                 </h1>
-                <p className="text-xs text-slate-400 -mt-1">Web3 Dashboard</p>
+                <p className="text-xs text-slate-400 -mt-1 hidden sm:block">Web3 Dashboard</p>
+              </div>
+              {/* Mobile logo text - show only on very small screens when xs is hidden */}
+              <div className="block xs:hidden sm:hidden">
+                <h1 className="text-sm font-bold bg-gradient-to-r from-white via-slate-200 to-slate-300 bg-clip-text text-transparent">
+                  TNV Tools
+                </h1>
               </div>
             </div>
 
             {/* Right Side Controls */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               
               {/* Network Selector */}
               <div className="relative">
@@ -238,8 +242,12 @@ const Navbar = () => {
                   className="group relative bg-slate-800/50 hover:bg-slate-700/60 border border-slate-700/50 hover:border-slate-600/50 px-4 py-2.5 rounded-xl flex items-center transition-all duration-200 backdrop-blur-sm"
                 >
                   <NetworkStatusDot network={currentNetwork} />
-                  <span className="text-sm font-medium text-slate-200 mr-2">
-                    {currentNetwork || "Select Network"}
+                  <span className="text-sm font-medium text-slate-200 mr-2 max-w-20 sm:max-w-none truncate">
+                    {currentNetwork ? (
+                      <span>{currentNetwork}</span>
+                    ) : (
+                      <span>Select Network</span>
+                    )}
                   </span>
                   <svg
                     className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${

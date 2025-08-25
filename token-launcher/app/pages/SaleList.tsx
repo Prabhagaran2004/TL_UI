@@ -50,7 +50,6 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
   // Helper function to get current IST time
   const getCurrentISTTime = (): Date => {
     const now = new Date();
-    // Convert to IST (UTC+5:30)
     const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
     const istTime = new Date(now.getTime() + istOffset);
     return istTime;
@@ -62,8 +61,6 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
     
     try {
       let date: Date;
-      
-      // If the value matches 'DD/MM/YYYY HH:mm AM/PM', parse it
       const customPattern = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}) (AM|PM)$/;
       
       if (typeof dateValue === 'string') {
@@ -74,26 +71,19 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
           let hour24 = parseInt(hour);
           if (ampm === 'PM' && hour24 !== 12) hour24 += 12;
           if (ampm === 'AM' && hour24 === 12) hour24 = 0;
-          
           date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), hour24, parseInt(minute));
         } else {
-          // Check if it's already in locale format (like "8/24/2004, 6:35:00 AM")
           const localePattern = /^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} (AM|PM)$/;
           if (localePattern.test(dateValue)) {
             date = new Date(dateValue);
           } else {
-            // Try parsing as regular date string
             date = new Date(dateValue);
             if (isNaN(date.getTime())) {
-              // Try parsing as number if it's a numeric string
               const numericValue = Number(dateValue);
               if (!isNaN(numericValue)) {
-                // Handle timestamp properly - check if it's in seconds or milliseconds
                 if (numericValue < 1000000000000) {
-                  // Timestamp in seconds, convert to milliseconds
                   date = new Date(numericValue * 1000);
                 } else {
-                  // Timestamp in milliseconds
                   date = new Date(numericValue);
                 }
               }
@@ -101,12 +91,9 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
           }
         }
       } else if (typeof dateValue === 'number') {
-        // Handle timestamp (both seconds and milliseconds)
         if (dateValue < 1000000000000) {
-          // Timestamp in seconds, convert to milliseconds
           date = new Date(dateValue * 1000);
         } else {
-          // Timestamp in milliseconds
           date = new Date(dateValue);
         }
       } else {
@@ -117,7 +104,6 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
         return null;
       }
       
-      // Additional validation: reject dates that are too old (before 2020) or too far in future (after 2030)
       const year = date.getFullYear();
       if (year < 2020 || year > 2030) {
         console.warn(`Date ${dateValue} parsed to year ${year}, which seems invalid. Rejecting.`);
@@ -125,7 +111,6 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
       }
       
       return date;
-      
     } catch (error) {
       console.error('Error parsing date:', error);
       return null;
@@ -139,7 +124,6 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
     const parsedDate = parseToISTDate(dateValue);
     if (!parsedDate) return `Invalid date: ${dateValue}`;
     
-    // Format to IST
     return parsedDate.toLocaleString('en-IN', {
       timeZone: 'Asia/Kolkata',
       day: '2-digit',
@@ -153,11 +137,10 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
 
   // Helper function to check if sale is active based on IST
   const isSaleActive = (sale: Sale): boolean => {
-    const currentIST = new Date(); // Current time
+    const currentIST = new Date();
     const startTime = parseToISTDate(sale.startTime || sale.publicStartDate);
     const endTime = parseToISTDate(sale.endTime || sale.publicEndDate);
     
-    // If we can't parse dates, exclude the sale (safer approach)
     if (!startTime || !endTime) {
       console.warn(`Sale ${sale.id} has invalid dates:`, {
         startTime: sale.startTime || sale.publicStartDate,
@@ -166,10 +149,8 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
       return false;
     }
     
-    // Debug logging
     console.log(`Sale ${sale.id} - Start: ${startTime.toISOString()}, End: ${endTime.toISOString()}, Current: ${currentIST.toISOString()}`);
     
-    // Check if current time is between start and end time
     const isActive = currentIST >= startTime && currentIST <= endTime;
     
     if (!isActive) {
@@ -202,42 +183,36 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
     const fetchSales = async (): Promise<void> => {
       try {
         setLoading(true);
-        // Fetch all sales for all users
         const allSalesRef = ref(database, 'sales');
         const allSalesSnap = await get(allSalesRef);
         let allSales: Sale[] = [];
         
         if (allSalesSnap.exists()) {
           const salesData: SalesData = allSalesSnap.val();
-          // Flatten all launches from all users
           Object.entries(salesData).forEach(([user, launches]) => {
             if (launches && launches.launches) {
               Object.entries(launches.launches).forEach(([id, data]) => {
                 allSales.push({
                   id,
                   ...data,
-                  // Map the date fields to consistent names
                   startTime: data.startTime || data.publicStartDate,
                   endTime: data.endTime || data.publicEndDate,
-                  createdBy: user // Ensure creator is attached to each sale
+                  createdBy: user
                 });
               });
             }
           });
         }
         
-        // Filter sales based on whitelist logic
         const whitelistFilteredSales = allSales.filter(sale => {
           if (!sale.hasWhitelist || !sale.whitelist) return true;
           if (!walletAddress) return false;
-          // Show if wallet is in whitelist or is creator
           const isCreator = sale.createdBy && sale.createdBy.toLowerCase() === walletAddress.toLowerCase();
           const isWhitelisted = Array.isArray(sale.whitelist.whitelistAddresses) && 
             sale.whitelist.whitelistAddresses.map(addr => addr.toLowerCase()).includes(walletAddress.toLowerCase());
           return isCreator || isWhitelisted;
         });
         
-        // Filter sales based on time (only show active sales based on IST)
         const activeFilteredSales = whitelistFilteredSales.filter(sale => isSaleActive(sale));
         
         setSales(activeFilteredSales);
@@ -252,7 +227,6 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
     fetchSales();
   }, [walletAddress]);
 
-  // Check if wallet is already connected
   useEffect(() => {
     const checkWalletConnection = async (): Promise<void> => {
       if (typeof window !== 'undefined' && window.ethereum) {
@@ -272,7 +246,6 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
     checkWalletConnection();
   }, []);
 
-  // Update current time every second
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -285,14 +258,13 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
     if (onNavigate) {
       onNavigate(`/sale/${saleId}`);
     } else if (typeof window !== 'undefined') {
-      // Use Next.js client-side navigation
       window.location.href = `/sale/${saleId}`;
     }
   };
 
   if (loading) {
     return (
-      <div className="text-center py-4">
+      <div className="text-center py-8 text-white text-lg font-medium">
         Loading sales...
       </div>
     );
@@ -300,15 +272,15 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
 
   if (error) {
     return (
-      <div className="text-center py-4 text-red-500">
+      <div className="text-center py-8 text-red-400 text-lg font-medium">
         {error}
         {typeof window !== 'undefined' && !window.ethereum && (
-          <div className="mt-2">
+          <div className="mt-4">
             <a 
               href="https://metamask.io/download.html" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-blue-500 underline"
+              className="text-cyan-400 hover:text-cyan-300 transition-colors duration-300 font-medium underline"
             >
               Install MetaMask
             </a>
@@ -320,23 +292,23 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
 
   if (!isConnected) {
     return (
-      <div className="text-center py-8">
+      <div className="text-center py-12 sm:pt-16 md:pl-[240px] sm:pb-12">
         <button
           onClick={connectWallet}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors"
+          className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
         >
           Connect Wallet
         </button>
-        <p className="mt-2 text-gray-600">Connect your wallet to view your sales</p>
+        <p className="mt-4 text-gray-300 text-base">Connect your wallet to view your sales</p>
       </div>
     );
   }
 
   if (sales.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-lg">No active sales found for your wallet</p>
-        <p className="text-sm text-gray-500 mt-2">
+      <div className="text-center py-12 sm:pt-16 md:pl-[240px] sm:pb-12">
+        <p className="text-xl text-white font-medium">No active sales found for your wallet</p>
+        <p className="text-sm text-gray-300 mt-3">
           Wallet: {walletAddress.substring(0, 6)}...{walletAddress.substring(38)}
         </p>
       </div>
@@ -344,19 +316,19 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
   }
 
   return (
-    <div className="relative z-10 min-h-screen overflow-hidden bg-slate-900 px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-12 gap-4">
+    <div className="relative z-10 min-h-screen bg-slate-900 px-6 sm:px-8 lg:px-12 py-16 sm:py-24 md:pl-[240px]">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 sm:mb-14 gap-6">
           <div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
               Your Active Sales
             </h2>
-            <p className="text-sm text-slate-400 mt-2">
+            <p className="text-base text-gray-300 mt-3">
               Showing sales active as of current IST time
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="bg-slate-800/30 text-cyan-400 px-3 py-1 rounded-full text-sm border border-slate-700/50 backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <div className="bg-gray-800/40 text-cyan-300 px-4 py-2 rounded-lg text-sm font-medium border border-gray-700/40 shadow-sm">
               {currentTime.toLocaleString('en-IN', {
                 timeZone: 'Asia/Kolkata',
                 day: '2-digit',
@@ -368,66 +340,66 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
                 hour12: true
               })}
             </div>
-            <div className="bg-slate-800/30 text-slate-300 px-3 py-1 rounded-full text-sm border border-slate-700/50 backdrop-blur-sm">
+            <div className="bg-gray-800/40 text-gray-200 px-4 py-2 rounded-lg text-sm font-medium border border-gray-700/40 shadow-sm">
               Connected: {walletAddress.substring(0, 6)}...{walletAddress.substring(38)}
             </div>
           </div>
         </div>
         
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {sales.map((sale) => (
             <div 
               key={sale.id} 
-              className="group bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-slate-700/50 p-6 hover:border-slate-600/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl"
+              className="group bg-gray-800/30 rounded-2xl border border-gray-700/40 p-6 hover:border-cyan-500/50 transition-all duration-500 hover:shadow-xl hover:scale-[1.02]"
             >
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl sm:text-2xl font-semibold text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-white group-hover:to-slate-300 transition-all duration-300">
-                  {sale.tokenName} <span className="text-slate-400">({sale.tokenSymbol})</span>
+              <div className="flex justify-between items-start mb-5">
+                <h3 className="text-2xl font-bold text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-cyan-300 group-hover:bg-clip-text transition-all duration-300">
+                  {sale.tokenName} <span className="text-gray-300">({sale.tokenSymbol})</span>
                 </h3>
-                <span className="bg-green-600/20 text-green-400 text-xs px-2 py-1 rounded border border-green-500/30">
+                <span className="bg-green-600/30 text-green-300 text-xs px-3 py-1 rounded-full border border-green-500/40 font-medium">
                   ACTIVE
                 </span>
               </div>
               
-              <div className="space-y-3 text-sm">
+              <div className="space-y-4 text-base">
                 <div className="flex justify-between">
-                  <span className="font-semibold text-slate-400 group-hover:text-slate-300">Token Address:</span>
-                  <span className="font-mono text-xs text-slate-300">
+                  <span className="font-semibold text-gray-300 group-hover:text-white">Token Address:</span>
+                  <span className="font-mono text-sm text-gray-200">
                     {sale.tokenAddress ? sale.tokenAddress.substring(0, 12) + '...' : 'N/A'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-semibold text-slate-400 group-hover:text-slate-300">Listing Rate:</span>
-                  <span className="text-slate-300">{sale.listingRate || sale.lpLaunchPrice || 'N/A'}</span>
+                  <span className="font-semibold text-gray-300 group-hover:text-white">Listing Rate:</span>
+                  <span className="text-gray-200">{sale.listingRate || sale.lpLaunchPrice || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-semibold text-slate-400 group-hover:text-slate-300">Soft Cap:</span>
-                  <span className="text-slate-300">{sale.softCap || sale.softcap || 'N/A'}</span>
+                  <span className="font-semibold text-gray-300 group-hover:text-white">Soft Cap:</span>
+                  <span className="text-gray-200">{sale.softCap || sale.softcap || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-semibold text-slate-400 group-hover:text-slate-300">Hard Cap:</span>
-                  <span className="text-slate-300">{sale.hardCap || sale.hardcap || 'N/A'}</span>
+                  <span className="font-semibold text-gray-300 group-hover:text-white">Hard Cap:</span>
+                  <span className="text-gray-200">{sale.hardCap || sale.hardcap || 'N/A'}</span>
                 </div>
-                <div className="pt-3 mt-3 border-t border-slate-700/50">
+                <div className="pt-4 mt-4 border-t border-gray-700/40">
                   <div className="flex justify-between">
-                    <span className="font-semibold text-slate-400 group-hover:text-slate-300">Start:</span>
-                    <span className="text-xs text-slate-300">{formatDate(sale.startTime || sale.publicStartDate)}</span>
+                    <span className="font-semibold text-gray-300 group-hover:text-white">Start:</span>
+                    <span className="text-sm text-gray-200">{formatDate(sale.startTime || sale.publicStartDate)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-semibold text-slate-400 group-hover:text-slate-300">End:</span>
-                    <span className="text-xs text-slate-300">{formatDate(sale.endTime || sale.publicEndDate)}</span>
+                    <span className="font-semibold text-gray-300 group-hover:text-white">End:</span>
+                    <span className="text-sm text-gray-200">{formatDate(sale.endTime || sale.publicEndDate)}</span>
                   </div>
                 </div>
               </div>
               
-              <div className="mt-4 pt-4 border-t border-slate-700/50 flex justify-between items-center">
+              <div className="mt-5 pt-5 border-t border-gray-700/40 flex justify-between items-center">
                 <button 
                   onClick={() => handleViewDetails(sale.id)}
-                  className="text-cyan-400 hover:text-cyan-300 font-medium text-sm transition-colors duration-300"
+                  className="text-cyan-400 hover:text-cyan-300 font-semibold text-base transition-colors duration-300"
                 >
                   View Details →
                 </button>
-                <span className="text-xs text-slate-400">ID: {sale.id.substring(0, 8)}</span>
+                <span className="text-xs text-gray-300">ID: {sale.id.substring(0, 8)}</span>
               </div>
             </div>
           ))}
