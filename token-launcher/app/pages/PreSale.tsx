@@ -1318,7 +1318,7 @@ const TokenPresalePage = () => {
                 ) : (
                   <button
                     onClick={handleLaunch}
-                    className="flex items-center space-x-2 px-8 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-green-500 hover:to-blue-500 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-green-500/25"
+                    className="flex items-center space-x-2 px-8 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
                   >
                     <FaRocket className="text-sm" />
                     <span>Launch Presale</span>
