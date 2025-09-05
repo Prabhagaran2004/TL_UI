@@ -4,7 +4,7 @@ import SaleDetails from '@/app/pages/SaleDetails';
 
 export default function SaleDetailsPage() {
   return (
-          <div className="min-h-screen bg-gray-100">
+          <div className="min-h-screen bg-slate-900">
           <Sidebar />
           <div className="pl-36 flex-1">
             <Navbar />

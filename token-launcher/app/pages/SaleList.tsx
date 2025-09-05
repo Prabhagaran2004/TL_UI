@@ -348,7 +348,7 @@ const SaleList: React.FC<SaleListProps> = ({ onNavigate }) => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-from-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-400/30 mb-6">
             <FaExclamationTriangle className="text-4xl text-red-400" />

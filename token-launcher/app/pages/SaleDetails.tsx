@@ -156,8 +156,8 @@ const SaleDetails: React.FC = () => {
     return null;
   }
 
-  return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
+  return ( 
+    <div className="container bg-gray-800 mx-auto px-4 py-8 max-w-3xl ">
       <button
         onClick={() => router.push('/sales')}
         className="mb-6 text-blue-600 hover:text-blue-800"
@@ -165,17 +165,17 @@ const SaleDetails: React.FC = () => {
         ← Back to All Sales
       </button>
       {showPurchaseTab && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full relative">
+        <div className="fixed inset-0 bg-slate-800 bg-opacity-40 flex items-center justify-center z-50">
+          <div className=" rounded-lg shadow-lg p-8 max-w-md w-full relative bg-slate-900">
             <button
-              className="absolute top-2 right-2 text-black hover:text-gray-900"
+              className="absolute top-2 right-2 text-red-500 hover:text-black"
               onClick={() => setShowPurchaseTab(false)}
             >
               ✕
             </button>
-            <div className="mb-4">
+            <div className="mb-4 ">
               <span className="block text-xs font-semibold text-gray-500">Sale ID:</span>
-              <span className="block font-mono text-base text-gray-800">{sale?.id}</span>
+              <span className="block font-mono text-base text-gray-500">{sale?.id}</span>
               <span className="block mt-2 text-xs font-semibold text-gray-500">
                 {sale?.hasWhitelist && sale?.whitelist
                   ? `Whitelist Sale Limit: ${sale.whitelist.whitelistSaleLimit}`
@@ -191,9 +191,7 @@ const SaleDetails: React.FC = () => {
           </div>
         </div>
       )}
-      <div className="bg-white rounded-lg shadow-md p-6 border border
-
--gray-200">
+      <div className="bg-slate-900 rounded-lg shadow-md p-6 border-gray-200">
         <div className="flex justify-between items-start mb-4">
           <div>
             <h2 className="text-2xl font-bold">
@@ -212,7 +210,7 @@ const SaleDetails: React.FC = () => {
           </span>
         </div>
         {sale.description && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <div className="mb-6 p-4 bg-slate-700 rounded-lg">
             <h3 className="font-semibold mb-2">Description</h3>
             <p>{sale.description}</p>
           </div>
